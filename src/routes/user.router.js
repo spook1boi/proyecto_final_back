@@ -131,4 +131,24 @@ userRouter.get('/current', async (req, res) => {
   }
 });
 
+userRouter.post('/change-role/:uid', async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const newRole = req.body.newRole;
+
+    if (!uid || !newRole) {
+      logger.error('Missing user ID or new role');
+      return res.status(400).json({ status: 400, error: 'Missing user ID or new role' });
+    }
+
+    const updatedUser = await userController.changeUserRole(uid, newRole);
+
+    logger.info('User role changed successfully:', { userId: uid, newRole });
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    logger.error('Error while changing user role:', { error });
+    res.status(500).json({ status: 'Error while changing user role', body: error.message });
+  }
+});
+
 export default userRouter;

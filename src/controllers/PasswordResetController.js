@@ -26,7 +26,7 @@ class PasswordResetController {
         },
       });
       
-      const resetLink = `http://tu-sitio.com/reset-password/${token}`;
+      const resetLink = `http://localhost:3000/reset-password/${token}`; //necesito cambiar la ruta
       const mailOptions = {
         to: user.email,
         subject: 'Restablecimiento de Contraseña',

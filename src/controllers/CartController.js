@@ -59,8 +59,14 @@ class CartController {
     }
   }
 
-  async addProductToCart(cartId, productDTO) {
+  async addProductToCart(cartId, productDTO, userRole) {
     try {
+      const productOwner = productDTO.owner;
+
+      if (userRole === 'premium' && productOwner === user.email) {
+        throw new Error('No puedes agregar tu propio producto al carrito');
+      }
+
       await this.cartsRepository.addProductToCart(cartId, productDTO);
       logger.info('Product added to cart successfully:', { cartId, productDTO });
     } catch (error) {

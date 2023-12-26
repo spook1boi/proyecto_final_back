@@ -20,6 +20,7 @@ import prodRouter from "../src/routes/product.router.js";
 import cartRouter from "../src/routes/cart.router.js";
 import userRouter from "../src/routes/user.router.js";
 import loggerTestRouter from "../src/routes/loggerTest.js"
+import passwordResetRouter from './routes/passwordResetRouter.js';
 
 import initializePassport from '../src/config/passport.config.js'
 import ProductController from "../src/controllers/ProductController.js";
@@ -40,7 +41,6 @@ if (process.env.NODE_ENV === 'development') {
   logger.level = 'info';
 }
 
-// Configuración de Winston
 const consoleTransport = new winston.transports.Console();
 const fileTransport = new winston.transports.File({ filename: 'combined.log' });
 
@@ -83,6 +83,7 @@ app.use("/api", prodRouter);
 app.use("/api", cartRouter);
 app.use("/api/sessions", userRouter);
 app.use('/api', loggerTestRouter);
+app.use('/api', passwordResetRouter);
 
 app.get("/", async (req, res) => {
     try {

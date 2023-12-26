@@ -51,6 +51,25 @@ class UsersRepository {
       throw error;
     }
   }
+
+  async changeUserRole(userId, newRole) {
+    try {
+      const user = await usersModel.findById(userId);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      user.rol = newRole;
+      const updatedUser = await user.save();
+
+      logger.info('User role updated successfully:', { userId, newRole });
+      return updatedUser;
+    } catch (error) {
+      logger.error('Error in changeUserRole:', { error });
+      throw error;
+    }
+  }
 }
 
 export default UsersRepository;

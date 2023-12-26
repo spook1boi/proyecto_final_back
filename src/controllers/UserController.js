@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import UsersRepository from '../repositories/User.repository.js';
-import UserDTO from '../dao/DTOs/user.dto.js';
-import logger from '../../src/loggers.js';
+import logger from '../loggers.js';
+import nodemailer from 'nodemailer';
 
 class UserController {
   constructor() {
@@ -72,6 +72,16 @@ class UserController {
     } catch (error) {
       logger.error('Error while verifying token:', { error });
       throw new Error('Error while verifying token');
+    }
+  }
+
+  async changeUserRole(userId, newRole) {
+    try {
+      const updatedUser = await this.usersRepository.changeUserRole(userId, newRole);
+      return updatedUser;
+    } catch (error) {
+      logger.error('Error while changing user role:', { error });
+      throw new Error('Error while changing user role');
     }
   }
 }

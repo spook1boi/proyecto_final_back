@@ -60,7 +60,14 @@ class CartsRepository {
         throw new Error('Cart not found');
       }
 
-      const updatedCart = await this.cartsDAO.addProductToCart(cartId, productDTO);
+      const existingProduct = cart.products.find(prod => prod.productId === productDTO.productId);
+
+      if (existingProduct) {
+        throw new Error('Product already exists in the cart');
+      }
+
+      cart.products.push(productDTO);
+      const updatedCart = await this.cartsDAO.updateCart(cart);
 
       return updatedCart;
     } catch (error) {
