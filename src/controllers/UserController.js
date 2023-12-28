@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import UsersRepository from '../repositories/User.repository.js';
 import logger from '../loggers.js';
 import nodemailer from 'nodemailer';
+import UserDTO from '../dao/DTOs/user.dto.js';
 
 class UserController {
   constructor() {
