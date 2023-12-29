@@ -14,6 +14,9 @@ import "../src/db/db.config.js";
 import dotenv from 'dotenv';
 import __dirname from "./utils.js";
 
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerUi from 'swagger-ui-express'
+
 dotenv.config();
 
 import prodRouter from "../src/routes/product.router.js";
@@ -152,6 +155,20 @@ app.use((err, req, res, next) => {
   logger.error(`Error: ${err.message}`, { error: err });
   res.status(500).send('Something went wrong!');
 });
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.1',
+    info: {
+      title: 'Documentacion de Api',
+      description: 'Documentacion de la API',
+    },
+  },
+  apis: ['src/docs/Products.yaml', 'src/docs/Carts.yaml'],
+};
+
+const spec = swaggerJSDoc(swaggerOptions);
+app.use('/apidocs', swaggerUi.serve, swaggerUi.setup(spec));
 
 mongoose
     .connect(process.env.MONGO_URI, {

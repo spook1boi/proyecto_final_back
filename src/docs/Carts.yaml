@@ -1,0 +1,51 @@
+openapi: 3.0.1
+info:
+  title: Documentacion de Api - Carritos
+  description: Documentacion de la API para la gestión de carritos
+  version: 1.0.0
+tags:
+  - name: Carts
+paths:
+  /api/carts:
+    get:
+      summary: Obtiene todos los carritos
+      description: Retorna todos los carritos disponibles
+      tags:
+        - Carts
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Carts'
+              message: Operación exitosa
+        '500':
+          description: Error interno del servidor
+  /api/carts/{cid}:
+    get:
+      summary: Obtiene los datos de un carrito por ID
+      parameters:
+        - name: cid
+          in: path
+          required: true
+          description: ID del carrito solicitado
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Carrito encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Carts'
+        '500':
+          description: Error interno del servidor
+components:
+  schemas:
+    Carts:
+      type: object
+      properties:
+        // Propiedades del carrito aquí
