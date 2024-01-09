@@ -10,11 +10,11 @@ describe('User Authentication Tests', () => {
   // Test para registrar un nuevo usuario
   it('Should register a new user', async () => {
     const newUser = {
-      first_name: 'John',
-      last_name: 'Doe',
-      email: 'john.doe@example.com',
+      first_name: 'Edu',
+      last_name: 'Zul',
+      email: 'correo@ejemplo.com',
       age: 25,
-      password: 'password123',
+      password: 'pass123',
     };
 
     const res = await chai.request(app).post('/api/sessions/register').send(newUser);
@@ -26,8 +26,8 @@ describe('User Authentication Tests', () => {
   // Test para iniciar sesión
   it('Should login a user', async () => {
     const credentials = {
-      email: 'john.doe@example.com',
-      password: 'password123',
+      email: 'correo@ejemplo.com',
+      password: 'pass123',
     };
 
     const res = await chai.request(app).post('/api/sessions/login').send(credentials);

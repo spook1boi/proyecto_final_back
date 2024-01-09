@@ -20,8 +20,8 @@ describe('Cart API Tests', () => {
     const newCart = {
       userId: 'exampleUserId',
       products: [
-        { productId: 'exampleProductId1', quantity: 2 },
-        { productId: 'exampleProductId2', quantity: 1 },
+        { productId: 'GameId1', quantity: 2 },
+        { productId: 'GameId2', quantity: 1 },
       ],
     };
 
@@ -49,7 +49,7 @@ describe('Cart API Tests', () => {
       this.skip(); 
     }
 
-    const prodId = 'exampleProductId3'; 
+    const prodId = 'GameId3'; 
     const productToAdd = { productId: prodId, quantity: 3 };
 
     const res = await chai.request(app).post(`/api/carts/${createdCartId}/products/${prodId}`).send(productToAdd);
@@ -66,8 +66,8 @@ describe('Cart API Tests', () => {
 
     const updatedCart = {
       products: [
-        { productId: 'updatedProductId1', quantity: 3 },
-        { productId: 'updatedProductId2', quantity: 2 },
+        { productId: 'updatedGameId1', quantity: 3 },
+        { productId: 'updatedGameId2', quantity: 2 },
       ],
     };
 

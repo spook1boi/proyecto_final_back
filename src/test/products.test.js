@@ -19,8 +19,8 @@ describe('Product API Tests', () => {
   it('Should add a new product', async () => {
     const newProduct = {
       name: 'Example Product',
-      price: 19.99,
-      category: 'Electronics',
+      price: 19000,
+      category: 'Random Game',
     };
 
     const res = await chai.request(app).post('/api/products').send(newProduct);
@@ -51,7 +51,7 @@ describe('Product API Tests', () => {
 
     const updatedProduct = {
       name: 'Updated Product',
-      price: 29.99,
+      price: 30000,
     };
 
     const res = await chai.request(app).put(`/api/products/${createdProductId}`).send(updatedProduct);
