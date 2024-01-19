@@ -85,6 +85,26 @@ class UserController {
       throw new Error('Error while changing user role');
     }
   }
+
+  async uploadDocuments(userId, documents) {
+    try {
+      const updatedUser = await this.usersRepository.uploadDocuments(userId, documents);
+      return updatedUser;
+    } catch (error) {
+      logger.error('Error while uploading documents:', { error });
+      throw new Error('Error while uploading documents');
+    }
+  }
+
+  async updateLastConnection(userId) {
+    try {
+      const updatedUser = await this.usersRepository.updateLastConnection(userId);
+      return updatedUser;
+    } catch (error) {
+      logger.error('Error while updating last connection:', { error });
+      throw new Error('Error while updating last connection');
+    }
+  }
 }
 
 export default UserController;
