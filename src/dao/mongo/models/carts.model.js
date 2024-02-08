@@ -12,6 +12,8 @@ const cartsSchema = new mongoose.Schema({
           quantity: Number,
         },
       ],
-});
+})
 
-export const cartsModel = mongoose.model(cartsCollection, cartsSchema)
+const cartsModel = mongoose.model(cartsCollection, cartsSchema);
+
+export default cartsModel;

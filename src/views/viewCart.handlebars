@@ -3,26 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista Cart</title>
-
-    <link rel="stylesheet" href="/css/styles.css">
+    <title>Detalle Producto</title>
 </head>
-
 <body>
-
+    <a href="/">Volver a la lista de productos</a>
+     Carrito de usuario {{user}}
     <div class="product-details">
         <p>Carrito ID: {{carts._id}}</p>
         <h2>Productos en el carrito:</h2>
         <ul>
             {{#each carts.products}}
                 <li>
-                    <p>Producto ID: {{this.productId._id}}</p>
-                    <p>Descripcion: {{this.productId.description}}</p>
+                    <p>Producto: {{this.productId._id}}</p>
+                    <p>Descripcion: {{this.productId.title}}</p>
                     <p>Precio: ${{this.productId.price}}</p>
                     <p>Cantidad: {{this.quantity}}</p>
+                    <p>Total: ${{this.total}}</p>
                 </li>
             {{/each}}
         </ul>
+        <p>Suma Total: ${{calculateSumTotal carts.products}}</p>
+       <p id="totalPriceDisplay"></p> 
+        <form action="/checkout" method="GET">
+            <input type="hidden" name="cartId" value="{{carts._id}}">
+            <input type="hidden" name="purchaser" value="{{user}}">
+            <input type="hidden" name="totalPrice" value="{{calculateSumTotal carts.products}}">
+            <button type="submit">Completar Compra</button>
+        </form>
     </div>
 
 </body>

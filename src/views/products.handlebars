@@ -3,43 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Productos</title>
-    <link rel="stylesheet" href="../public/styles.css">
+    <title>Detalle Producto</title>
 </head>
 <body>
-    <h1>Lista de Productos</h1>
-    {{#each products}}
-    <div class="product-item">
-        <h2>{{this.title}}</h2>
-        <p>Precio: ${{this.price}}</p>
-        <p>Categoría: {{this.category}}</p>
-        <button class="add-to-cart" data-product-id="{{this._id}}">Agregar al carrito</button>
-        <a href="/products/{{this._id}}">Ver detalles</a>
+    <header>
+        <h1>{{product.title}}</h1>
+        <a href="/">Volver a la lista de productos</a>
+    </header>
+    <div class="product-details">
+        <h2>{{product.title}}</h2>
+        <h3>{{product.title}}</h3>
+        <p>Precio: ${{product.price}}</p>
+        <p>Stock: {{product.stock}}</p>
+        <p>Categoría: {{product.category}}</p>
+        <div class="quantity-container">
+            <button type="button"  class="quantity-btn" onclick="decrementQuantity()">-</button>
+            <p id="quantityValue">0</p>
+            <button type="button"  class="quantity-btn" onclick="incrementQuantity()">+</button>
+        </div>
+        <button type="submit">Agregar al Carrito</button>
     </div>
-    {{/each}}
-    <div id="cart-view">
-        
-    </div>
+        </form>
+
+    <footer>
+
+    </footer>
     <script>
-        const addToCartButtons = document.querySelectorAll('.add-to-cart');
-        const cart = [];
+        let quantity = 0;
 
-        addToCartButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const productId = event.target.getAttribute('data-product-id');
-                cart.push({ productId, quantity: 1 });
+        function incrementQuantity() {
+            quantity++;
+            updateQuantity();
+        }
 
-                updateCartView(cart);
-            });
-        });
+        function decrementQuantity() {
+            if (quantity > 0) {
+                quantity--;
+                updateQuantity();
+            }
+        }
 
-        function updateCartView(cart) {
-            const cartView = document.getElementById('cart-view');
-            cartView.innerHTML = '<h2>Carrito de Compras</h2>';
-            cart.forEach(item => {
-                cartView.innerHTML += `<p>Producto: ${item.productId}, Cantidad: ${item.quantity}</p>`;
-            });
+        function updateQuantity() {
+            document.getElementById('quantityValue').innerText = quantity;
         }
     </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/detailProduct.js"></script>  
 </body>
 </html>

@@ -1,6 +1,6 @@
 export default class ProductDTO {
     constructor(product) {
-      this.description = product.description;
+      this.title = product.title;
       this.image = product.image;
       this.price = product.price;
       this.stock = product.stock;
@@ -9,7 +9,7 @@ export default class ProductDTO {
   
     toJSON() {
       return {
-        description: this.description,
+        title: this.title,
         image: this.image,
         price: this.price,
         stock: this.stock,

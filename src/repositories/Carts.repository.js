@@ -1,95 +1,65 @@
-import CartsMongoDAO from '../dao/mongo/carts.mongo.js';
-import CartDTO from '../dao/DTOs/cart.dto.js';
-import logger from '../loggers.js'; 
-
-class CartsRepository {
-  constructor() {
-    this.cartsDAO = new CartsMongoDAO();
+export default class CartRepository {
+  constructor(dao) {
+      this.dao = dao;
   }
 
-  async getCarts() {
-    try {
-      return await this.cartsDAO.getCarts();
-    } catch (error) {
-      logger.error('Error in getCarts:', { error });
-      throw error;
-    }
-  }
-
-  async addCart(cartDTO) {
-    try {
-      return await this.cartsDAO.addCart(cartDTO);
-    } catch (error) {
-      logger.error('Error in addCart:', { error });
-      throw error;
-    }
-  }
-
-  async getCartById(cartId) {
-    try {
-      return await this.cartsDAO.getCartById(cartId);
-    } catch (error) {
-      logger.error('Error in getCartById:', { error });
-      throw error;
-    }
-  }
-
-  async removeProductFromCart(cartId, prodId) {
-    try {
-      return await this.cartsDAO.removeProductFromCart(cartId, prodId);
-    } catch (error) {
-      logger.error('Error in removeProductFromCart:', { error });
-      throw error;
-    }
-  }
-
-  async getCartWithProducts(cartId) {
-    try {
-      return await this.cartsDAO.getCartWithProducts(cartId);
-    } catch (error) {
-      logger.error('Error in getCartWithProducts:', { error });
-      throw error;
-    }
-  }
-
-  async addProductToCart(cartId, productDTO) {
-    try {
-      const cart = await this.cartsDAO.getCartById(cartId);
-
-      if (!cart) {
-        throw new Error('Cart not found');
+  getCarts = async () => {
+      try {
+          let result = await this.dao.get();
+          return result;
+      } catch (error) {
+          logger.error('Error in getCarts:', { error });
+          throw error;
       }
-
-      const existingProduct = cart.products.find(prod => prod.productId === productDTO.productId);
-
-      if (existingProduct) {
-        throw new Error('Product already exists in the cart');
-      }
-
-      cart.products.push(productDTO);
-      const updatedCart = await this.cartsDAO.updateCart(cart);
-
-      return updatedCart;
-    } catch (error) {
-      logger.error('Error in addProductToCart:', { error });
-      throw error;
-    }
   }
 
-  async updateProductQuantity(cartId, prodId, quantity) {
+  createCart = async (cart) => {
+      try {
+          let result = await this.dao.create(cart);
+          return result;
+      } catch (error) {
+          logger.error('Error in createCart:', { error });
+          throw error;
+      }
+  }
+
+  addToCart = async (cartId, productId, quantity) => {
     try {
-      const cart = await this.cartsDAO.getCartById(cartId);
-      if (!cart) {
-        throw new Error('Cart not found');
-      }
-      const updatedCart = await this.cartsDAO.updateProductQuantity(cartId, prodId, quantity);
-
-      return updatedCart;
+        let result = await this.dao.addToCart(cartId, productId, quantity);
+        return result;
     } catch (error) {
-      logger.error('Error in updateProductQuantity:', { error });
-      throw error;
+        logger.error('Error in addToCart:', { error });
+        throw error;
     }
-  }
 }
 
-export default CartsRepository;
+  validateCart = async (cartId) => {
+      try {
+          let result = await this.dao.validateCart(cartId);
+          return result;
+      } catch (error) {
+          logger.error('Error in validateCart:', { error });
+          throw error;
+      }
+  }
+
+  validateStock = async (products) => {
+      try {
+          let result = await this.dao.validateStock(products);
+          return result;
+      } catch (error) {
+          logger.error('Error in validateStock:', { error });
+          throw error;
+      }
+  }
+
+  getAmount = async (products) => {
+      try {
+          let result = await this.dao.getAmount(products);
+          return result;
+      } catch (error) {
+          logger.error('Error in getAmount:', { error });
+          throw error;
+      }
+  }
+}

@@ -1,123 +1,95 @@
 import { Router } from "express";
-import ProductController from "../controllers/ProductController.js";
-import logger from "../loggers.js";
+import ProductDTO from "../dao/DTOs/product.dto.js";
+import productRepository from "../repositories/Products.repository.js";
+import userRepository from "../repositories/User.repository.js";
+import ProductsDAO from "../dao/mongo/products.mongo.js";
+import logger from "../loggers.js"; 
 
 const prodRouter = Router();
-const productController = new ProductController();
 
-const errorHandler = (res, error) => {
-  logger.error('Error:', { error });
-  res.status(500).json({ error: 'Internal Server Error' });
-};
+const productsDAO = new ProductsDAO();
 
-prodRouter.get("/products/:pid", async (req, res) => {
-  try {
-    const prodId = req.params.pid;
-    const productDetails = await productController.getProductById(prodId);
+prodRouter.use((req, res, next) => {
+    req.logger = logger; 
+    next();
+});
 
-    if (productDetails === 'Product not found') {
-      res.status(404).json({ error: 'Product not found' });
-    } else {
-      logger.info('Product details fetched successfully');
-      res.render('productDetails', { layout: 'main', title: 'Detalles del Producto', product: productDetails });
+prodRouter.get("/", async (req, res) => {
+    try {
+        req.logger.info('Loading products');
+        let result = await productsDAO.get();
+        res.status(200).send({ status: "success", payload: result });
+    } catch (error) {
+        req.logger.error('Error loading products');
+        res.status(500).send({ status: "error", message: "Internal Server Error" });
     }
-  } catch (error) {
-    logger.error('Error getting the product:', { error });
-    res.status(500).json({ error: 'Error getting the product' });
-  }
 });
 
-prodRouter.get("/products/category/:category", async (req, res) => {
-  try {
-    const category = req.params.category;
-    const products = await productController.getProductsByCategory(category);
-    if (products.length === 0) {
-      res.status(404).json({ error: 'No se encontraron productos en la categoría proporcionada.' });
-    } else {
-      logger.info('Products fetched by category successfully');
-      res.json(products);
+prodRouter.get("/:id", async (req, res) => {
+    try {
+        const prodId = req.params.id;
+        const userEmail = req.query.email;
+        const productDetails = await productsDAO.getProductById(prodId);
+        res.render("viewProducts", { product: productDetails, email: userEmail });
+    } catch (error) {
+        req.logger.error('Error obtaining product:', error);
+        res.status(500).json({ error: 'Error obtaining product' });
     }
-  } catch (error) {
-    errorHandler(res, error);
-  }
 });
 
-prodRouter.get("/products/limit/:limit", async (req, res) => {
-  try {
-    let limit = parseInt(req.params.limit) ?? 10;
-    logger.info(`Products fetched with limit: ${limit}`);
-    res.json(await productController.getProductsByLimit(limit));
-  } catch (error) {
-    errorHandler(res, error);
-  }
-});
-
-prodRouter.get("/products/page/:page", async (req, res) => {
-  try {
-    const page = parseInt(req.params.page) ?? 1;
-    if (page <= 0) {
-      logger.error('Invalid page number');
-      return res.status(400).json({ error: 'Invalid page number' });
+prodRouter.post("/", async (req, res) => {
+    let { title, image, price, stock, category, owner } = req.body;
+    
+    if (!owner || owner === '') {
+        owner = 'admin@admin.cl';
     }
-    const productsPerPage = 10;
-    const products = await productController.getProductsByPage(page, productsPerPage);
-    logger.info('Products fetched by page successfully');
-    res.json(products);
-  } catch (error) {
-    errorHandler(res, error);
-  }
+    
+    const product = { title, image, price, stock, category, owner };
+    
+    if (!title || !price) {
+        req.logger.error("Missing description or price while creating product");
+        return res.status(400).json({ error: 'Missing description or price while creating product' });
+    }
+
+    try {
+        let prod = new ProductDTO({ title, image, price, stock, category, owner });
+        let userPremium = await userRepository.getRolUser(owner);
+
+        if (userPremium === 'premium') {
+            let result = await productRepository.createProduct(prod);
+            res.status(200).send({ status: "success", payload: result });
+            req.logger.info('Product created successfully by premium user');
+        } else {
+            req.logger.error("Owner must be a premium user");
+            res.status(500).send({ status: "error", message: "Internal Server Error" });
+        }
+    } catch (error) {
+        req.logger.error("Internal Server Error:", error);
+        res.status(500).send({ status: "error", message: "Internal Server Error" });
+    }
 });
 
-prodRouter.put("/products/:pid", async (req, res) => {
-  try {
-    const pid = req.params.pid;
-    const updProd = req.body;
-    logger.info(`Product updated with ID: ${pid}`);
-    res.json(await productController.updateProduct(pid, updProd));
-  } catch (error) {
-    errorHandler(res, error);
-  }
-});
+prodRouter.delete('/:idProd', async (req, res) => {
+    try {
+        const idProducto = req.params.idProd;
+        let ownerProd = await productsDAO.getProductOwnerById(idProducto);
+        let userRol = await userRepository.getRolUser(ownerProd.owner);
 
-prodRouter.get("/products/search/query", async (req, res) => {
-  try {
-    const query = req.query.q;
-    logger.info(`Products fetched by search query: ${query}`);
-    res.json(await productController.getProductsByQuery(query));
-  } catch (error) {
-    errorHandler(res, error);
-  }
-});
+        if (userRol === 'premium') {
+            await transport.sendMail({
+                from: 'ed.zuleta_@live.cl',
+                to: ownerProd.owner,
+                subject: 'Producto eliminado con Owner Premium',
+                html: `El producto con id ${idProducto} ha sido eliminado.`,
+            });
+        }
 
-prodRouter.post("/products", async (req, res) => {
-  try {
-    const newProduct = req.body;
-    logger.info('Product added successfully');
-    res.json(await productController.addProduct(newProduct));
-  } catch (error) {
-    errorHandler(res, error);
-  }
-});
-
-prodRouter.delete("/products/:pid", async (req, res) => {
-  try {
-    const pid = req.params.pid;
-    logger.info(`Product deleted with ID: ${pid}`);
-    res.json(await productController.delProducts(pid));
-  } catch (error) {
-    errorHandler(res, error);
-  }
-});
-
-prodRouter.get("/products", async (req, res) => {
-  try {
-    const { sortOrder = "asc", category = "", availability = "" } = req.query;
-    const products = await productController.getProductsMaster(null, null, category, availability, sortOrder);
-    logger.info('Products fetched successfully');
-    res.json(products);
-  } catch (error) {
-    errorHandler(res, error);
-  }
+        await productsDAO.deleteProduct(idProducto);
+        res.status(200).json({ message: 'Product deleted successfully.' });
+    } catch (error) {
+        req.logger.error('Error deleting product:', error);
+        res.status(500).json({ error: 'Error deleting product.' });
+    }
 });
 
 export default prodRouter;

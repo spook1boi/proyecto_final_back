@@ -4,7 +4,7 @@ import UserManager from '../dao/mongo/users.mongo.js';
 import { createHash, isValidPassword, generateToken, verifyToken } from '../utils.js';
 import GitHubStrategy from 'passport-github2';
 import jwt from 'passport-jwt';
-import { usersModel } from '../dao/mongo/models/users.model.js';
+import usersModel from '../dao/mongo/models/users.model.js';
 import config from '../config/config.js'; 
 import dotenv from 'dotenv';
 import logger from '../loggers.js'

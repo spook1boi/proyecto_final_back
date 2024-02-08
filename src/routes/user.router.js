@@ -1,233 +1,94 @@
-import { Router } from 'express';
-import passport from 'passport';
-import UserController from '../controllers/UserController.js';
-import { generateToken } from '../utils.js';
-import multer from 'multer';
-import path from 'path';
-import logger from '../loggers.js';
+import { Router } from "express";
+import UserDTO from "../dao/DTOs/user.dto.js";
+import userRepository from "../repositories/User.repository.js";
+import UsersDAO from "../dao/mongo/users.mongo.js";
+import { transport } from "../utils.js";
 
 const userRouter = Router();
-const userController = new UserController();
 
-const documentsStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const { uid } = req.params;
-    const fileType = req.body.fileType;
-    let uploadPath = '';
+const usersDAO = new UsersDAO();
 
-    switch (fileType) {
-      case 'profile':
-        uploadPath = `uploads/profiles/${uid}`;
-        break;
-      case 'product':
-        uploadPath = `uploads/products/${uid}`;
-        break;
-      case 'document':
-        uploadPath = `uploads/documents/${uid}`;
-        break;
-      default:
-        uploadPath = 'uploads';
+userRouter.get("/", async (req, res) => {
+    try {
+        req.logger.info('Loading users');
+        let result = await usersDAO.get();
+        res.status(200).send({ status: "success", payload: result });
+    } catch (error) {
+        req.logger.error('Error loading users');
+        res.status(500).send({ status: "error", message: "Internal Server Error" });
     }
-
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
 });
 
-const upload = multer({ storage: documentsStorage });
-
-userRouter.post("/register", passport.authenticate("register", { failureRedirect: "/api/sessions/failregister" }), async (req, res) => {
-  try {
-    const { first_name, last_name, email, age, password, rol } = req.body;
-    if (!first_name || !last_name || !email || !age || !password) {
-      logger.error('Missing data');
-      return res.status(400).send({ status: 400, error: 'Missing data' });
+userRouter.post("/", async (req, res) => {
+    try {
+        let { first_name, last_name, email, age, password, rol } = req.body;
+        let user = new UserDTO({ first_name, last_name, email, age, password, rol });
+        let result = await userRepository.createUser(user);
+        if (result) {
+            req.logger.info('User created successfully');
+        } else {
+            req.logger.error("Error creating user");
+        }
+        res.status(200).send({ status: "success", payload: result });
+    } catch (error) {
+        req.logger.error("Internal Server Error:", error);
+        res.status(500).send({ status: "error", message: "Internal Server Error" });
     }
-
-    const defaultRole = 'user';
-
-    const userToRegister = {
-      first_name,
-      last_name,
-      email,
-      age,
-      password,
-      rol: rol || defaultRole,
-    };
-
-    const result = await userController.register(userToRegister);
-
-    logger.info('User registered successfully');
-    res.redirect("/api/sessions/login");
-  } catch (error) {
-    logger.error('Error while registering:', { error });
-    res.status(500).send("Error while registering: " + error.message);
-  }
 });
 
-userRouter.post("/login", async (req, res, next) => {
-  try {
-    const result = await userController.login(req, res, next);
+userRouter.post("/premium/:uid", async (req, res) => {
+    try {
+        const { rol } = req.body;
+        const allowedRoles = ['premium', 'admin', 'usuario'];
+        const uid = req.params.uid;
 
-    if (result.error) {
-      logger.error('Login failed:', { error: result.error });
-      return res.status(result.status).send(result.error);
+        if (!allowedRoles.includes(rol)) {
+            req.logger.error('Invalid role provided');
+            return res.status(400).json({ error: 'Invalid role' });
+        }
+
+        if (!(await userRepository.hasRequiredDocuments(uid))) {
+            req.logger.error('User does not have the required documents for premium role');
+            return res.status(400).json({ error: 'User does not have the required documents for premium role' });
+        }
+
+        let changeRol = await userRepository.updUserRol({ uid, rol });
+
+        if (changeRol) {
+            req.logger.info('Role updated successfully');
+            res.status(200).json({ message: 'Role updated successfully' });
+        } else {
+            req.logger.error('Error updating role');
+            res.status(500).json({ error: 'Error updating role' });
+        }
+    } catch (error) {
+        req.logger.error('Error in route /premium/:uid');
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-
-    const { user, token, redirectPath } = result;
-
-    req.logIn(user, async (loginErr) => {
-      if (loginErr) {
-        logger.error('Error al iniciar sesión:', { error: loginErr });
-        return res.status(500).send("Error al iniciar sesión: " + loginErr.message);
-      }
-
-      const userPayload = {
-        email: user.email,
-        rol: user.rol,
-      };
-
-      const token = await generateToken(userPayload);
-      logger.info('Token:', { token });
-      res.cookie('token', token, { httpOnly: true, maxAge: 3600000 });
-
-      if (user.rol === 'admin') {
-        req.session.firstName = user.first_name;
-        req.session.lastName = user.last_name;
-        req.session.emailUser = user.email;
-        req.session.rol = user.rol;
-        res.redirect("/api/sessions/profile");
-      } else {
-        req.session.firstName = user.first_name;
-        req.session.lastName = user.last_name;
-        req.session.emailUser = user.email;
-        req.session.rol = user.rol;
-        res.redirect(redirectPath);
-      }
-    });
-  } catch (error) {
-    logger.error('Error while logging in:', { error });
-    res.status(500).send("Error while logging in: " + error.message);
-  }
 });
 
-userRouter.get("/faillogin", (req, res) => {
-  logger.error('Failed Login');
-  res.send({ error: "Failed Login" });
-});
-
-userRouter.get("/logout", (req, res) => {
-  try {
-    const result = userController.logout(req, res);
-
-    if (result.error) {
-      logger.error('Logout Error:', { error: result.error });
-      return res.status(result.status).json({ status: 'Logout Error', body: result.error });
+userRouter.delete('/', async (req, res) => {
+    try {
+        const currentDate = new Date();
+        const cutoffDate = new Date(currentDate.getTime() - 2 * 24 * 60 * 60 * 1000); 
+        const result = await usersDAO.deleteUsersByFilter({ last_connection: { $lt: cutoffDate } });
+        if (result.length > 0) {
+            for (const userEmail of result) {
+                await transport.sendMail({
+                    from: 'ed.zuleta_@live.cl',
+                    to: userEmail,
+                    subject: 'Account Deletion Due to Inactivity',
+                    text: 'Your account has been deleted due to inactivity.'
+                });
+            }
+            res.status(200).json({ message: 'Users deleted successfully.' });
+        } else {
+            res.status(500).json({ message: 'No users were deleted due to inactivity' });
+        }
+    } catch (error) {
+        req.logger.error('Error deleting users');
+        res.status(500).json({ error: 'Error deleting users' });
     }
-
-    res.clearCookie('token');
-    logger.info('User logged out successfully');
-    res.redirect('/api/sessions/login');
-  } catch (error) {
-    logger.error('Error while logging out:', { error });
-    res.status(500).json({ status: 'Logout Error', body: error.message });
-  }
-});
-
-userRouter.post("/:uid/documents", upload.array('documents'), async (req, res) => {
-  try {
-    const { uid } = req.params;
-    const uploadedDocuments = req.files;
-
-    if (!uid || !uploadedDocuments) {
-      logger.error('Missing user ID or uploaded documents');
-      return res.status(400).json({ status: 400, error: 'Missing user ID or uploaded documents' });
-    }
-
-    const documentList = uploadedDocuments.map(doc => ({
-      name: doc.originalname,
-      reference: `/api/users/documents/${uid}/${doc.filename}`,
-    }));
-
-    const updatedUser = await userController.uploadDocuments(uid, documentList);
-
-    logger.info('Documents uploaded successfully:', { userId: uid, documents: documentList });
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    logger.error('Error while uploading documents:', { error });
-    res.status(500).json({ status: 'Error while uploading documents', body: error.message });
-  }
-});
-
-userRouter.put('/users/premium/:uid', async (req, res) => {
-  try {
-    const { uid } = req.params;
-    const requiredDocuments = ['Identificación', 'Comprobante de domicilio', 'Comprobante de estado de cuenta'];
-
-    const user = await userController.getUserById(uid);
-    const userDocuments = user.documents || [];
-    const hasAllDocuments = requiredDocuments.every(doc => userDocuments.some(d => d.name === doc));
-
-    if (!hasAllDocuments) {
-      logger.error('User has not uploaded all required documents');
-      return res.status(400).json({ message: 'User has not uploaded all required documents' });
-    }
-
-    const updatedUser = await userController.changeUserRole(uid, 'premium');
-    logger.info('User role changed to premium successfully:', { userId: uid });
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    logger.error('Error while changing user role to premium:', { error });
-    res.status(500).json({ message: 'Error while changing user role to premium' });
-  }
-});
-
-userRouter.get("/github", passport.authenticate("github", { scope: ["user:email"] }), (req, res) => {});
-
-userRouter.get("/githubcallback", passport.authenticate("github", { failureRedirect: "/api/sessions/login" }), (req, res) => {
-  req.session.user = req.user;
-  req.session.emailUser = req.session.user.email;
-  req.session.rol = req.session.user.rol;
-  res.redirect("/");
-});
-
-userRouter.get('/current', async (req, res) => {
-  try {
-    const result = await userController.getCurrentUserInfo(req);
-
-    if (result.error) {
-      logger.error('Error while getting current user:', { error: result.error });
-      return res.status(result.status).json({ message: result.error });
-    }
-
-    logger.info('Current user fetched successfully');
-    return res.status(200).json(result.user);
-  } catch (error) {
-    logger.error('Error while getting current user:', { error });
-    return res.status(500).json({ message: 'Error while getting current user' });
-  }
-});
-
-userRouter.post('/change-role/:uid', async (req, res) => {
-  try {
-    const { uid } = req.params;
-    const newRole = req.body.newRole;
-
-    if (!uid || !newRole) {
-      logger.error('Missing user ID or new role');
-      return res.status(400).json({ status: 400, error: 'Missing user ID or new role' });
-    }
-
-    const updatedUser = await userController.changeUserRole(uid, newRole);
-
-    logger.info('User role changed successfully:', { userId: uid, newRole });
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    logger.error('Error while changing user role:', { error });
-    res.status(500).json({ status: 'Error while changing user role', body: error.message });
-  }
 });
 
 export default userRouter;

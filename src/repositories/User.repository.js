@@ -1,75 +1,53 @@
-import UsersMongoDAO from '../dao/mongo/users.mongo.js';
-import UserDTO from '../dao/DTOs/user.dto.js';
-import logger from '../loggers.js'; 
-
-class UsersRepository {
-  constructor() {
-    this.usersDAO = new UsersMongoDAO();
+export default class UserRepository {
+  constructor(dao) {
+      this.dao = dao;
   }
 
-  async getUsers() {
-    try {
-      return await this.usersDAO.getUsers();
-    } catch (error) {
-      logger.error('Error in getUsers:', { error });
-      throw error;
-    }
-  }
-
-  async getUserById(id) {
-    try {
-      return await this.usersDAO.getUserById(id);
-    } catch (error) {
-      logger.error('Error in getUserById:', { error });
-      throw error;
-    }
-  }
-
-  async addUser(userDTO) {
-    try {
-      return await this.usersDAO.addUser(userDTO);
-    } catch (error) {
-      logger.error('Error in addUser:', { error });
-      throw error;
-    }
-  }
-
-  async findUser(email) {
-    try {
-      return await this.usersDAO.findUser(email);
-    } catch (error) {
-      logger.error('Error in findUser:', { error });
-      throw error;
-    }
-  }
-
-  async findEmail(email) {
-    try {
-      return await this.usersDAO.findEmail(email);
-    } catch (error) {
-      logger.error('Error in findEmail:', { error });
-      throw error;
-    }
-  }
-
-  async changeUserRole(userId, newRole) {
-    try {
-      const user = await usersModel.findById(userId);
-
-      if (!user) {
-        throw new Error('User not found');
+  getUsers = async () => {
+      try {
+          let result = await this.dao.get();
+          return result;
+      } catch (error) {
+          logger.error('Error in getUsers:', { error });
+          throw error;
       }
+  }
 
-      user.rol = newRole;
-      const updatedUser = await user.save();
+  createUser = async (user) => {
+      try {
+          let result = await this.dao.addUser(user);
+          return result;
+      } catch (error) {
+          logger.error('Error in createUser:', { error });
+          throw error;
+      }
+  }
 
-      logger.info('User role updated successfully:', { userId, newRole });
-      return updatedUser;
-    } catch (error) {
-      logger.error('Error in changeUserRole:', { error });
-      throw error;
-    }
+  getRolUser = async (email) => {
+      try {
+          let result = await this.dao.getUserRoleByEmail(email);
+          return result;
+      } catch (error) {
+          logger.error('Error in getRolUser:', { error });
+          throw error;
+      }
+  }
+
+  updUserRol = async ({uid, rol}) => {
+      try {
+          let result = await this.dao.updateUserRoleById({uid, rol});
+          return result;
+      } catch (error) {
+          logger.error('Error in updUserRol:', { error });
+          throw error;
+      }
+  }
+
+  hasRequiredDocuments = async (uid) => {
+      try {
+      } catch (error) {
+          logger.error('Error in hasRequiredDocuments:', { error });
+          throw error;
+      }
   }
 }
-
-export default UsersRepository;

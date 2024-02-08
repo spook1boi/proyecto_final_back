@@ -3,26 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista Products</title>
-
-    <link rel="stylesheet" href="/css/styles.css">
+    <title>Detalle Producto</title>
 </head>
-
 <body>
-
     <header>
         <h1>{{title}}</h1>
         <a href="/">Volver a la lista de productos</a>
     </header>
-
+    <form id="formAddProductInCart">
     <div class="product-details">
+        <p id="email" hidden>{{email}}</p>
+        <p id="id_prod">{{product._id}}</p>
         <h2>{{product.title}}</h2>
-        <h3>{{product.description}}</h3>
         <p>Precio: ${{product.price}}</p>
         <p>Stock: {{product.stock}}</p>
-        <p>Categoria: {{product.category}}</p>
-        <button>Agregar al Carrito</button>
-    </div>
+        <p>Categoría: {{product.category}}</p>
+        <div class="quantity-container">
+            <button type="button"  class="quantity-btn" onclick="decrementQuantity()">-</button>
+            <p id="quantityValue">0</p>
+            <button type="button"  class="quantity-btn" onclick="incrementQuantity()">+</button>
+        </div>
+        <button type="submit">Agregar al Carrito</button>
+        </div>
+        </form>
     
+    <script>
+        let quantity = 0;
+
+        function incrementQuantity() {
+            quantity++;
+            updateQuantity();
+        }
+
+        function decrementQuantity() {
+            if (quantity > 0) {
+                quantity--;
+                updateQuantity();
+            }
+        }
+
+        function updateQuantity() {
+            document.getElementById('quantityValue').innerText = quantity;
+        }
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/detailProduct.js"></script>  
 </body>
 </html>

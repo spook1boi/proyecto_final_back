@@ -1,127 +1,84 @@
-import { productsModel } from './models/products.model.js';
+import productsModel from './models/products.model.js';
 import mongoose from 'mongoose';
-import ProductDTO from '../DTOs/product.dto.js';
-import logger from '../../loggers.js'; 
+import logger from '../../loggers.js';
 
-class ProductsMongoDAO {
-  async addProduct(productDTO) {
-    try {
-      const product = new productsModel(productDTO);
-      await product.save();
-      logger.info('Product added', { product: productDTO });
-      return 'Product added';
-    } catch (error) {
-      logger.error(`Error adding product: ${error.message}`, { error, product: productDTO });
-      return 'Error adding product';
+export default class Products {
+    constructor() {}
+
+    async get() {
+        try {
+            let products = await productsModel.find().lean();
+            return products;
+        } catch (error) {
+            logger.error('Error al obtener productos:', { error });
+            throw new Error('Error interno al obtener productos');
+        }
     }
-  }
 
-  async updateProduct(id, productDTO) {
-    try {
-      const product = await productsModel.findById(id);
-      if (!product) {
-        logger.warn('Product not found', { productId: id });
-        return 'Product not found';
-      }
-      product.set(productDTO);
-      await product.save();
-      logger.info('Product updated', { product: productDTO });
-      return 'Product updated';
-    } catch (error) {
-      logger.error(`Error updating product: ${error.message}`, { error, productId: id, product: productDTO });
-      return 'Error updating product';
+    async addProduct(prodData) {
+        try {
+            let prodCreate = await productsModel.create(prodData);
+            return prodCreate;
+        } catch (error) {
+            logger.error('Error al crear producto:', { error });
+            throw new Error('Error al crear producto');
+        }
     }
-  }
 
-  async getProducts() {
-    try {
-      const products = await productsModel.find({});
-      const productDTOs = products.map(product => new ProductDTO(product));
-      return productDTOs;
-    } catch (error) {
-      logger.error(`Error getting products: ${error.message}`, { error });
-      return [];
+    async updateProduct(prodId, prodData) {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(prodId)) {
+                return 'ID de producto no válido';
+            }
+            let updatedProduct = await productsModel.updateOne({ _id: new mongoose.Types.ObjectId(prodId) }, { $set: prodData });
+            return updatedProduct;
+        } catch (error) {
+            logger.error('Error al actualizar producto:', { error });
+            throw new Error('Error al actualizar producto');
+        }
     }
-  }
 
-  async getProductById(id) {
-    try {
-      const product = await productsModel.findById(id).lean();
-      if (!product) {
-        logger.warn('Product not found', { productId: id });
-        return 'Product not found';
-      }
-      const productDTO = new ProductDTO(product);
-      logger.debug('Retrieved product', { product: productDTO });
-      return productDTO;
-    } catch (error) {
-      logger.error(`Error getting product: ${error.message}`, { error, productId: id });
-      return 'Error getting product';
+    async deleteProduct(productId) {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(productId)) {
+                return 'ID de producto no válido';
+            }
+            let deletedProduct = await productsModel.deleteOne({ _id: new mongoose.Types.ObjectId(productId) });
+            return deletedProduct;
+        } catch (error) {
+            logger.error('Error al eliminar producto:', { error });
+            throw new Error('Error al eliminar producto');
+        }
+    };
+
+    async getProductById(id) {
+        try {
+            const prod = await productsModel.findById(id).lean();
+            if (!prod) {
+                return 'Producto no encontrado';
+            }
+            return prod;
+        } catch (error) {
+            logger.error('Error al obtener el producto:', { error });
+            throw new Error('Error al obtener el producto');
+        }
     }
-  }
 
-  async getProductsByCategory(category) {
-    try {
-      const products = await productsModel.find({ category });
-      const productDTOs = products.map(product => new ProductDTO(product));
-      logger.debug('Retrieved products by category', { category, products: productDTOs });
-      return productDTOs;
-    } catch (error) {
-      logger.error(`Error getting products by category: ${error.message}`, { error, category });
-      throw error;
-    }
-  }
-
-  async getProductsMaster(page, limit, category, availability, sortOrder) {
-    try {
-      const filter = {};
-
-      if (category) {
-        filter.category = category;
-      }
-
-      if (availability) {
-        filter.stock = { $gt: 0 };
-      }
-
-      const sort = {};
-
-      if (sortOrder === 'desc') {
-        sort.price = -1;
-      } else {
-        sort.price = 1;
-      }
-
-      const options = {
-        skip: (page - 1) * limit,
-        limit: limit,
-      };
-
-      const products = await productsModel.find(filter).sort(sort).skip(options.skip).limit(options.limit);
-      logger.debug('Retrieved products with filters', { filter, sort, options, products });
-
-      return products;
-    } catch (error) {
-      logger.error(`Error getting products: ${error.message}`, { error });
-      throw error;
-    }
-  }
-
-  async deleteProduct(id) {
-    try {
-      const product = await productsModel.findById(id);
-      if (!product) {
-        logger.warn('Product not found', { productId: id });
-        return 'Product not found';
-      }
-      await product.remove();
-      logger.info('Product deleted', { productId: id });
-      return 'Product deleted';
-    } catch (error) {
-      logger.error(`Error deleting product: ${error.message}`, { error, productId: id });
-      return 'Error deleting product';
-    }
-  }
+    async getProductOwnerById(productId) {
+        try {
+            const product = await productsModel.findById(productId).lean();
+            if (!product) {
+                return 'Producto no encontrado';
+            }
+            const ownerId = product.owner;
+            if (ownerId) {
+                return { owner: ownerId };
+            } else {
+                return 'Owner no encontrado';
+            }
+        } catch (error) {
+            logger.error('Error al obtener el owner del producto:', { error });
+            throw new Error('Error al obtener el owner del producto');
+        }
+    };
 }
-
-export default ProductsMongoDAO;

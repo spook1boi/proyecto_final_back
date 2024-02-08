@@ -8,39 +8,48 @@
 
 <body>
 
-<div class="user-links">
-
-        <p>Bienvenido, {{user.first_name}} {{user.last_name}} - {{user.rol}}</p>
-        <a href="/api/sessions/logout">Cerrar Sesion</a>
-
-    <div>
-        <a href="/api/sessions/login">Iniciar Sesion</a>
-        <a href="/api/sessions/register">Registrarse</a>
-    </div>
-</div>
-
-<div class="pagination">
-    <p>Pagina: {{page}}</p>
-    <a href="/?page={{page }}">Pagina Anterior</a>
-    <a href="/?page={{page }}">Pagina Siguiente</a>
-</div>
-
-<div class="infoProd">
-    <h1>Product list</h1>
-    <div class="detalleProd">
-        <div class="product-container">
-            {{#each products}}
-            <div class="product">
-                <h2>{{this.title}}</h2>
-                <h3>{{this.description}}</h3>
-                <p>Precio: ${{this.price}}</p>
-                <p>Categoria: {{this.category}}</p>
-                <a href="/api/products/{{this._id}}">Ver Detalle</a>
+<h1>SerpiJueguitos</h1>
+{{#if user}}
+    <h3>Bienvenido! {{user.first_name}}</h3>
+    <h4>Sesión iniciada de usuario <p id="correo">{{user.email}}</p></h4>
+    <button id="logoutButton">Cerrar Sesión</button> <br><br>
+    <a href="/carts/{{cartId}}?email={{user.email}}">Ver Carrito</a> <br><br>
+{{else}}
+    <p>¡Bienvenido a SerpiJueguitos! Por favor, inicia sesión o regístrate para continuar.</p>
+    <a href="/sessions/login">Iniciar sesión</a> <br><br>
+    <a href="/sessions/register">Registrarse</a> <br><br>
+{{/if}}
+<div class="container">
+    <div class="infoProd">
+        <h1>Lista de Productos</h1>
+        <div class="detalleProd">
+            <div id="productsContainer">
+                <ul>
+                    {{#each products}}
+                    <li>
+                        <strong>{{this.title}}</strong><br>
+                        Price: ${{this.price}}<br>
+                        Stock: {{this.stock}}<br>
+                        Category: {{this.category}}<br>
+                        <a href="/products/{{this._id}}?email={{../user.email}}">Ver Detalle</a>
+                    </li>
+                    {{/each}}
+                </ul>
             </div>
-            {{/each}}
         </div>
     </div>
 </div>
+
+<script>  
+    document.getElementById('logoutButton').addEventListener('click', cerrarSesion);
+    function cerrarSesion() {
+        localStorage.removeItem("token");
+        var userEmail = "{{user.email}}";
+        window.location.href = '/logout?email=' + userEmail;
+    }
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/user.js"></script>
 
 </body>
 </html>

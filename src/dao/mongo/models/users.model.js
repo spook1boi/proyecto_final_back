@@ -25,4 +25,6 @@ const userSchema = new mongoose.Schema({
   last_connection: Date
 });
 
-export const usersModel = mongoose.model(usersCollection, userSchema);
+const usersModel = mongoose.model(usersCollection, userSchema)
+
+export default usersModel

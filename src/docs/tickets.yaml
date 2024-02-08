@@ -1,0 +1,100 @@
+openapi: 3.0.1
+info:
+  title: Documentación de la API de Tickets
+  description: Documentación Swagger para la API de Tickets
+  version: 1.0.0
+paths:
+  /tickets/{tid}:
+    get:
+      summary: Obtener un ticket por su ID
+      parameters:
+        - in: path
+          name: tid
+          required: true
+          description: ID del ticket a obtener
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '404':
+          description: Ticket no encontrado
+    delete:
+      summary: Eliminar un ticket por su ID
+      parameters:
+        - in: path
+          name: tid
+          required: true
+          description: ID del ticket a eliminar
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Ticket eliminado correctamente
+        '404':
+          description: Ticket no encontrado
+  /tickets:
+    post:
+      summary: Crear un nuevo ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketInput'
+      responses:
+        '201':
+          description: Ticket creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Solicitud incorrecta
+components:
+  schemas:
+    Ticket:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: ID del ticket
+        code:
+          type: string
+          description: Código del ticket
+        purchase_datetime:
+          type: string
+          format: date-time
+          description: Fecha y hora de la compra del ticket
+        amount:
+          type: number
+          description: Monto total del ticket
+        purchaser:
+          type: string
+          description: Email del comprador
+        id_cart_ticket:
+          type: string
+          description: ID del carrito asociado al ticket
+    TicketInput:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Código del ticket
+        purchase_datetime:
+          type: string
+          format: date-time
+          description: Fecha y hora de la compra del ticket
+        amount:
+          type: number
+          description: Monto total del ticket
+        purchaser:
+          type: string
+          description: Email del comprador
+        id_cart_ticket:
+          type: string
+          description: ID del carrito asociado al ticket

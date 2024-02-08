@@ -1,6 +1,3 @@
-import TicketDTO from "../dao/DTOs/ticket.dto.js";
-import logger from '../loggers.js'; 
-
 export default class TicketRepository {
     constructor(dao) {
         this.dao = dao;
@@ -18,8 +15,7 @@ export default class TicketRepository {
 
     createTicket = async (ticket) => {
         try {
-            let ticketToInsert = new TicketDTO(ticket);
-            let result = await this.dao.create(ticketToInsert);
+            let result = await this.dao.create(ticket);
             return result;
         } catch (error) {
             logger.error('Error in createTicket:', { error });
